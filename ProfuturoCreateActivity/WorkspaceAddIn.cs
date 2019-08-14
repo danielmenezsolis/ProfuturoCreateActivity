@@ -83,10 +83,11 @@ namespace ProfuturoCreateActivity
             {
                 if (Init())
                 {
-                  
+
                     SWorkOrder = recordContext.GetWorkspaceRecord("TOA$Work_Order") as IGenericObject;
                     if (SWorkOrder != null)
                     {
+                        recordContext.ExecuteEditorCommand(EditorCommand.Save);
                         WorkOrderId = SWorkOrder.Id.ToString();
                         ObtenerInfoWorkOrder(WorkOrderId);
                         CrearActividad();
@@ -219,6 +220,11 @@ namespace ProfuturoCreateActivity
                 body += "\"Nombre empresa\":\"" + Empresa + "\",";
                 body += "\"customerPhone\":\"" + PhoneHome + "\",";
                 body += "\"customerCell\":\"" + PhoneCel + "\",";
+                if (!string.IsNullOrEmpty(X) && !string.IsNullOrEmpty(Y))
+                {
+                    body += "\"latitude\":" + X + ",";
+                    body += "\"longitude\":" + Y + ",";
+                }
                 body += "\"customerEmail\":\"" + Correo + "\"";
                 body += "}";
                 globalContext.LogMessage("Crear Actividad: \n " + body);
@@ -242,7 +248,7 @@ namespace ProfuturoCreateActivity
 
                         foreach (IGenericField field in fields)
                         {
-                            if(field.Name == "External_ID")
+                            if (field.Name == "External_ID")
                             {
                                 field.DataValue.Value = rootObject.activityId.ToString();
                             }
