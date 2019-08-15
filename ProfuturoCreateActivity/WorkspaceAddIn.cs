@@ -81,10 +81,11 @@ namespace ProfuturoCreateActivity
         {
             if (ActionName == "CrearActividad")
             {
+                SWorkOrder = recordContext.GetWorkspaceRecord("TOA$Work_Order") as IGenericObject;
                 if (Init())
                 {
 
-                    SWorkOrder = recordContext.GetWorkspaceRecord("TOA$Work_Order") as IGenericObject;
+
                     if (SWorkOrder != null)
                     {
                         recordContext.ExecuteEditorCommand(EditorCommand.Save);
@@ -108,6 +109,23 @@ namespace ProfuturoCreateActivity
                 recordContext.ExecuteEditorCommand(EditorCommand.Save);
                 PopulateContactDetails();
             }
+            if (ActionName == "ValidaFecha")
+            {
+                _workOrderRecord = recordContext.GetWorkspaceRecord(recordContext.WorkspaceTypeName) as ICustomObject;
+                IList<IGenericField> fields = _workOrderRecord.GenericFields;
+                foreach (IGenericField field in fields)
+                {
+                    if (field.Name == "WO_Date")
+                    {
+                        DateTime WDate = Convert.ToDateTime(field.DataValue.Value);
+                        if (WDate.Date < DateTime.Now.Date)
+                        {
+                            MessageBox.Show("La fecha de la cita no puede ser menor al día de hoy");
+                            field.DataValue.Value = DateTime.Now.Date;
+                        }
+                    }
+                }
+            }
 
         }
 
@@ -115,12 +133,9 @@ namespace ProfuturoCreateActivity
         {
             try
             {
-
                 IContact contactRecord = recordContext.GetWorkspaceRecord(WorkspaceRecordType.Contact) as IContact;
                 _workOrderRecord = recordContext.GetWorkspaceRecord(recordContext.WorkspaceTypeName) as ICustomObject;
-
                 IList<IGenericField> fields = _workOrderRecord.GenericFields;
-
                 foreach (IGenericField field in fields)
                 {
                     switch (field.Name)
@@ -232,11 +247,11 @@ namespace ProfuturoCreateActivity
 
                 IRestResponse response = client.Execute(request);
                 var content = response.Content; // raw content as string
-                if (content == "")
+                if (content.Contains("Bad"))
                 {
-
+                    MessageBox.Show("No se creó actividad, Motivo: " + content);
                 }
-                else
+                else if (content.Contains("activityId"))
                 {
                     RootObject rootObject = JsonConvert.DeserializeObject<RootObject>(response.Content);
                     if (rootObject.activityId > 0)
